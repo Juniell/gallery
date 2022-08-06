@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/navigation"
+    app:startDestination="@id/albumsFragment">
+    <fragment
+        android:id="@+id/albumsFragment"
+        android:name="com.example.gallery.ui.main.albums.AlbumsFragment"
+        android:label="AlbumsFragment" >
+        <action
+            android:id="@+id/action_albumsFragment_to_imagesFragment"
+            app:destination="@id/imagesFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/imagesFragment"
+        android:name="com.example.gallery.ui.main.images.ImagesFragment"
+        android:label="ImagesFragment" />
+</navigation>
