@@ -16,6 +16,8 @@ class GalleryViewModel(val app: Application) : AndroidViewModel(app) {
     val albums = _albums.asStateFlow()
     private val _selectedAlbum = MutableStateFlow(Album("", "", emptyList()))
     val selectedAlbum = _selectedAlbum.asStateFlow()
+    private val _selectedPhoto = MutableStateFlow(Photo(-1, "", "", ""))
+    var selectedPhoto = _selectedPhoto.asStateFlow()
 
     fun loadImages() {
         viewModelScope.launch {
@@ -27,6 +29,9 @@ class GalleryViewModel(val app: Application) : AndroidViewModel(app) {
         _selectedAlbum.value = album
     }
 
+    fun selectPhoto(photo: Photo) {
+        _selectedPhoto.value = photo
+    }
 
     private fun getAllImagesWithAlbum(): List<Album> {
         val albums = mutableMapOf<String, MutableList<Photo>>()

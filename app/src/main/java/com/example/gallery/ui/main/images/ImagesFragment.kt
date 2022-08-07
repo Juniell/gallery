@@ -7,8 +7,10 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
+import com.example.gallery.R
 import com.example.gallery.databinding.FragmentAlbumsImagesBinding
 import com.example.gallery.ui.main.GalleryViewModel
 import kotlinx.coroutines.launch
@@ -29,7 +31,8 @@ class ImagesFragment: Fragment() {
         with(binding.rvList) {
             layoutManager = GridLayoutManager(context, columnCount)
             adapter = ImagesRecyclerAdapter(listOf()) { pos ->
-                //todo: to FullScreen
+                vm.selectPhoto(vm.selectedAlbum.value.photos[pos])
+                findNavController().navigate(R.id.action_imagesFragment_to_fullscreenFragment)
             }
         }
 

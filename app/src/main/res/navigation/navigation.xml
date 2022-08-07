@@ -14,5 +14,13 @@
     <fragment
         android:id="@+id/imagesFragment"
         android:name="com.example.gallery.ui.main.images.ImagesFragment"
-        android:label="ImagesFragment" />
+        android:label="ImagesFragment" >
+        <action
+            android:id="@+id/action_imagesFragment_to_fullscreenFragment"
+            app:destination="@id/fullscreenFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/fullscreenFragment"
+        android:name="com.example.gallery.ui.main.fullscreen.FullscreenFragment"
+        android:label="FullscreenFragment" />
 </navigation>
