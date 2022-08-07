@@ -3,6 +3,7 @@ package com.example.gallery.ui.main
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
@@ -16,17 +17,17 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
+    private val vm: GalleryViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
-
-        val navHost = supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
+        val navHost =
+            supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
         navController = navHost.navController
 
         setContentView(binding.root)
-
         checkPermission()
     }
 
@@ -34,12 +35,13 @@ class MainActivity : AppCompatActivity() {
     private fun checkPermission() {
         val permissionStatus = checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
 
-        if (permissionStatus != PackageManager.PERMISSION_GRANTED) {
+        if (permissionStatus == PackageManager.PERMISSION_GRANTED) {
+            vm.loadImages()
+        } else
             requestPermissions(
                 arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
                 REQUEST_CODE_PERMISSION_READ_EXTERNAL_STORAGE
             )
-        }
     }
 
     override fun onRequestPermissionsResult(
@@ -50,11 +52,10 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == REQUEST_CODE_PERMISSION_READ_EXTERNAL_STORAGE)
             if (grantResults.isNotEmpty()
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED
-            ) {
-                // permission granted
-                //todo
-
-            } else {
+            )
+            // permission granted
+                vm.loadImages()
+            else {
                 // permission denied
                 //todo
             }
