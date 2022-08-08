@@ -10,6 +10,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import com.example.gallery.databinding.DialogFragmentRenameBinding
 import com.example.gallery.ui.main.GalleryViewModel
 import kotlinx.coroutines.launch
@@ -39,7 +40,7 @@ class RenameDialogFragment: DialogFragment() {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 vm.selectedPhoto.collect {
                     if (it.isEmpty()) {
-                        dismiss()
+                        findNavController().popBackStack()
                         return@collect
                     }
                 }
