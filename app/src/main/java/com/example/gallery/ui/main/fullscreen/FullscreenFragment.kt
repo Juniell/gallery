@@ -11,7 +11,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.gallery.R
@@ -35,12 +37,22 @@ class FullscreenFragment : Fragment() {
             findNavController().navigate(R.id.action_fullscreenFragment_to_renameDialogFragment)
         }
 
-        lifecycleScope.launch {
-            vm.selectedPhoto.collect {
-                Glide
-                    .with(binding.root)
-                    .load(vm.selectedPhoto.value.uri)
-                    .into(binding.imageFullscreen)
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                vm.selectedPhoto.collect {
+                    if (it.isEmpty()) {
+                        findNavController().popBackStack()
+                        return@collect
+                    }
+
+                    //todo: проверка на изменение только имени (наше переименование),
+                    // тогда не отрисовывать заново, а просто заменить имя
+
+                    Glide
+                        .with(binding.root)
+                        .load(vm.selectedPhoto.value.uri)
+                        .into(binding.imageFullscreen)
+                }
             }
         }
         hideSystemBars()

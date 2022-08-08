@@ -7,8 +7,12 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.gallery.databinding.DialogFragmentRenameBinding
 import com.example.gallery.ui.main.GalleryViewModel
+import kotlinx.coroutines.launch
 import java.io.File
 
 class RenameDialogFragment: DialogFragment() {
@@ -30,6 +34,18 @@ class RenameDialogFragment: DialogFragment() {
         binding.buttonCancelRename.setOnClickListener {
             dismiss()
         }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                vm.selectedPhoto.collect {
+                    if (it.isEmpty()) {
+                        dismiss()
+                        return@collect
+                    }
+                }
+            }
+        }
+
         return binding.root
     }
 

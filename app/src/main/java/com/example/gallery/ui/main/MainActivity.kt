@@ -40,8 +40,10 @@ class MainActivity : AppCompatActivity() {
         val rPermissionStatus = checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
         val permissionsList = mutableListOf<String>()
 
-        if (rPermissionStatus == PackageManager.PERMISSION_GRANTED)
+        if (rPermissionStatus == PackageManager.PERMISSION_GRANTED) {
             vm.loadImages()
+            vm.registerObserver()
+        }
         else
             permissionsList.add(Manifest.permission.READ_EXTERNAL_STORAGE)
 
@@ -92,9 +94,11 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == CODE_PERMISSION_EXTERNAL_STORAGE)
             if (grantResults.isNotEmpty()
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED
-            )
+            ) {
                 // permission granted
                 vm.loadImages()
+                vm.registerObserver()
+            }
             else {
                 // permission denied
                 //todo

@@ -1,11 +1,16 @@
 package com.example.gallery.ui.main
 
 import android.app.Application
+import android.database.ContentObserver
+import android.net.Uri
+import android.os.Handler
+import android.os.HandlerThread
 import android.provider.MediaStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gallery.model.Album
 import com.example.gallery.model.Photo
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -14,13 +19,13 @@ class GalleryViewModel(val app: Application) : AndroidViewModel(app) {
 
     private val _albums = MutableStateFlow(listOf<Album>())
     val albums = _albums.asStateFlow()
-    private val _selectedAlbum = MutableStateFlow(Album("", "", emptyList()))
+    private val _selectedAlbum = MutableStateFlow(Album.emptyAlbum)
     val selectedAlbum = _selectedAlbum.asStateFlow()
-    private val _selectedPhoto = MutableStateFlow(Photo(-1, "", "", ""))
+    private val _selectedPhoto = MutableStateFlow(Photo.emptyPhoto)
     var selectedPhoto = _selectedPhoto.asStateFlow()
 
     fun loadImages() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _albums.value = getAllImagesWithAlbum()
         }
     }
@@ -42,7 +47,6 @@ class GalleryViewModel(val app: Application) : AndroidViewModel(app) {
             MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
             MediaStore.Images.Media.DATA,
             MediaStore.Images.Media.DISPLAY_NAME
-//            MediaStore.Images.Media.DATE_TAKEN
         )
         val cursor = app.contentResolver.query(
             uri,
@@ -89,5 +93,89 @@ class GalleryViewModel(val app: Application) : AndroidViewModel(app) {
         }
 
         return resultList.sortedBy { it.name }
+    }
+
+    fun registerObserver() {
+        val handlerThread = HandlerThread("ContentObserverThread")
+        handlerThread.start()
+
+        app.contentResolver.registerContentObserver(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            true,
+            object : ContentObserver(
+                Handler(handlerThread.looper)
+            ) {
+                override fun onChange(
+                    selfChange: Boolean,
+                    uris: MutableCollection<Uri>,
+                    flags: Int
+                ) {
+                    println("ИЗМЕНЕНИЯ ПРИШЛИ")
+                    val newAlbums = getAllImagesWithAlbum()
+
+                    // Если новый и старый список альбомов совпали, ничего не надо менять
+                    if (newAlbums == _albums.value)
+                        return
+                    // Если списки разные, заменяем текущий список альбомов
+                    _albums.value = newAlbums
+
+                    // Если мы ещё не выбирали альбом, дальше ничего не надо менять
+                    if (_selectedAlbum.value.isEmpty())
+                        return
+
+                    // Если выбранный альбом не изменился, дальше ничего не надо менять
+                    if (newAlbums.contains(_selectedAlbum.value))
+                        return
+
+                    // Если выбранный альбом изменился, ищем его в новом списке по имени
+                    var newSelectedAlbum: Album? = null
+                    for (newAlbum in newAlbums) {
+                        if (newAlbum.name == _selectedAlbum.value.name) {
+                            newSelectedAlbum = newAlbum
+                            break
+                        }
+                    }
+
+                    // Если выбранный альбом не найден, очищаем выбранные альбом и фото
+                    if (newSelectedAlbum == null) {
+                        _selectedAlbum.value = Album.emptyAlbum
+                        _selectedPhoto.value = Photo.emptyPhoto
+                        return
+                    }
+
+                    // Если нашли выбранный альбом в новом списке, устанавливаем его в качестве выбранного
+                    _selectedAlbum.value = newSelectedAlbum
+
+                    // Если мы ещё не выбирали фото, дальше ничего не надо менять
+                    if (_selectedPhoto.value.isEmpty())
+                        return
+
+                    // Если выбранное фото не изменилось, дальше ничего менять не надо
+                    if (newSelectedAlbum.photos.contains(_selectedPhoto.value))
+                        return
+
+                    // Если выбранное фото изменилось, ищем его в новом альбоме
+                    var newSelectedPhoto: Photo? = null
+                    for (newPhoto in newSelectedAlbum.photos) {
+                        if (newPhoto.id == _selectedPhoto.value.id) {
+                            newSelectedPhoto = newPhoto
+                            break
+                        }
+                    }
+
+                    // Если выбранное фото не найдено, очищаем выбранное фото
+                    if (newSelectedPhoto == null) {
+                        _selectedPhoto.value = Photo.emptyPhoto
+                        return
+                    }
+
+                    // Если нашли выбранное фото в новом альбоме, устанавливаем его в качестве выбранного
+                    _selectedPhoto.value = newSelectedPhoto
+
+                    super.onChange(selfChange, uris, flags)
+                }
+
+            }
+        )
     }
 }

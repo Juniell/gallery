@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
@@ -15,7 +17,7 @@ import com.example.gallery.databinding.FragmentAlbumsImagesBinding
 import com.example.gallery.ui.main.GalleryViewModel
 import kotlinx.coroutines.launch
 
-class ImagesFragment: Fragment() {
+class ImagesFragment : Fragment() {
 
     private lateinit var binding: FragmentAlbumsImagesBinding
     private val vm: GalleryViewModel by activityViewModels()
@@ -36,14 +38,21 @@ class ImagesFragment: Fragment() {
             }
         }
 
-        lifecycleScope.launch{
-            vm.selectedAlbum.collect {
-                with(binding.rvList.adapter as ImagesRecyclerAdapter) {
-                    val diffUtil = ImagesDiffUtil(values, it.photos)
-                    val diffResult = DiffUtil.calculateDiff(diffUtil)
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                vm.selectedAlbum.collect {
+                    if (it.isEmpty()) {
+                        findNavController().popBackStack()
+                        return@collect
+                    }
 
-                    values = it.photos
-                    diffResult.dispatchUpdatesTo(this)
+                    with(binding.rvList.adapter as ImagesRecyclerAdapter) {
+                        val diffUtil = ImagesDiffUtil(values, it.photos)
+                        val diffResult = DiffUtil.calculateDiff(diffUtil)
+
+                        values = it.photos
+                        diffResult.dispatchUpdatesTo(this)
+                    }
                 }
             }
         }

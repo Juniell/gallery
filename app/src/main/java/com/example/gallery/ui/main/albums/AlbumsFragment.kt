@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
@@ -36,14 +38,16 @@ class AlbumsFragment : Fragment() {
             }
         }
 
-        lifecycleScope.launch {
-            vm.albums.collect {
-                with(binding.rvList.adapter as AlbumsRecyclerAdapter) {
-                    val diffUtil = AlbumsDiffUtil(values, it)
-                    val diffResult = DiffUtil.calculateDiff(diffUtil)
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                vm.albums.collect {
+                    with(binding.rvList.adapter as AlbumsRecyclerAdapter) {
+                        val diffUtil = AlbumsDiffUtil(values, it)
+                        val diffResult = DiffUtil.calculateDiff(diffUtil)
 
-                    values = it
-                    diffResult.dispatchUpdatesTo(this)
+                        values = it
+                        diffResult.dispatchUpdatesTo(this)
+                    }
                 }
             }
         }
