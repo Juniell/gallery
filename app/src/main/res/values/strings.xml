@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Gallery</string>
+    <string name="rename">Переименовать</string>
+    <string name="new_name">Новое имя</string>
+    <string name="accept">Принять</string>
+    <string name="cancel">Отмена</string>
 </resources>

@@ -1,8 +1,13 @@
 package com.example.gallery.ui.main
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
@@ -10,8 +15,7 @@ import androidx.navigation.fragment.NavHostFragment
 import com.example.gallery.R
 import com.example.gallery.databinding.ActivityMainBinding
 
-private const val REQUEST_CODE_PERMISSION_READ_EXTERNAL_STORAGE = 100
-
+private const val CODE_PERMISSION_EXTERNAL_STORAGE = 100
 
 class MainActivity : AppCompatActivity() {
 
@@ -28,20 +32,56 @@ class MainActivity : AppCompatActivity() {
         navController = navHost.navController
 
         setContentView(binding.root)
-        checkPermission()
+        check()
     }
 
 
-    private fun checkPermission() {
-        val permissionStatus = checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+    private fun check() {
+        val rPermissionStatus = checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+        val permissionsList = mutableListOf<String>()
 
-        if (permissionStatus == PackageManager.PERMISSION_GRANTED) {
+        if (rPermissionStatus == PackageManager.PERMISSION_GRANTED)
             vm.loadImages()
-        } else
-            requestPermissions(
-                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                REQUEST_CODE_PERMISSION_READ_EXTERNAL_STORAGE
-            )
+        else
+            permissionsList.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            val wPermissionStatus = checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            if (wPermissionStatus == PackageManager.PERMISSION_GRANTED)
+                permissionsList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+
+        // Запрос READ_EXTERNAL_STORAGE и/или WRITE_EXTERNAL_STORAGE
+        if (permissionsList.isNotEmpty())
+            requestPermissions(permissionsList.toTypedArray(), CODE_PERMISSION_EXTERNAL_STORAGE)
+
+        // Проверка и запрос MANAGE_EXTERNAL_STORAGE для SDK > R
+        checkAndRequestManageStorePermission()
+    }
+
+    private fun checkAndRequestManageStorePermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R)
+            return
+
+        if (Environment.isExternalStorageManager())
+            return
+
+        val intent = Intent()
+        intent.action = Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
+
+        val storagePermResLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            if (Environment.isExternalStorageManager()) {
+                //permission granted
+                // todo
+            } else {
+                //permission not granted
+                // todo
+            }
+        }
+        storagePermResLauncher.launch(intent)
     }
 
     override fun onRequestPermissionsResult(
@@ -49,11 +89,11 @@ class MainActivity : AppCompatActivity() {
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-        if (requestCode == REQUEST_CODE_PERMISSION_READ_EXTERNAL_STORAGE)
+        if (requestCode == CODE_PERMISSION_EXTERNAL_STORAGE)
             if (grantResults.isNotEmpty()
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED
             )
-            // permission granted
+                // permission granted
                 vm.loadImages()
             else {
                 // permission denied

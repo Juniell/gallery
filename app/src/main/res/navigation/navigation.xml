@@ -22,5 +22,13 @@
     <fragment
         android:id="@+id/fullscreenFragment"
         android:name="com.example.gallery.ui.main.fullscreen.FullscreenFragment"
-        android:label="FullscreenFragment" />
+        android:label="FullscreenFragment" >
+        <action
+            android:id="@+id/action_fullscreenFragment_to_renameDialogFragment"
+            app:destination="@id/renameDialogFragment" />
+    </fragment>
+    <dialog
+        android:id="@+id/renameDialogFragment"
+        android:name="com.example.gallery.ui.main.rename.RenameDialogFragment"
+        android:label="RenameDialogFragment" />
 </navigation>

@@ -12,7 +12,9 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
+import com.example.gallery.R
 import com.example.gallery.databinding.FragmentFullscreenBinding
 import com.example.gallery.ui.main.GalleryViewModel
 import kotlinx.coroutines.launch
@@ -28,6 +30,10 @@ class FullscreenFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentFullscreenBinding.inflate(layoutInflater)
+
+        binding.buttonFullscreen.setOnClickListener {
+            findNavController().navigate(R.id.action_fullscreenFragment_to_renameDialogFragment)
+        }
 
         lifecycleScope.launch {
             vm.selectedPhoto.collect {

@@ -46,6 +46,6 @@
         app:layout_constraintEnd_toEndOf="@+id/item_album_name"
         app:layout_constraintStart_toStartOf="@id/item_album_name"
         app:layout_constraintTop_toBottomOf="@id/item_album_name"
-        tools:text="920jncjbkcskcbkshbcjhsbcbskchb" />
+        tools:text="920" />
 </androidx.constraintlayout.widget.ConstraintLayout>
 
