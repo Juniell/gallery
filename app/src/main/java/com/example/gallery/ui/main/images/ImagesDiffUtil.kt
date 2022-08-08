@@ -23,6 +23,6 @@ class ImagesDiffUtil(
         val newPhoto = newList[newItemPosition]
         return oldPhoto.name == newPhoto.name &&
                 oldPhoto.albumName == newPhoto.albumName &&
-                oldPhoto.uri == newPhoto.uri
+                oldPhoto.uriContent == newPhoto.uriContent
     }
 }

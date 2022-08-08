@@ -24,7 +24,7 @@ class RenameDialogFragment: DialogFragment() {
     ): View {
         val binding = DialogFragmentRenameBinding.inflate(layoutInflater)
         val vm: GalleryViewModel by activityViewModels()
-        val currFile = File(vm.selectedPhoto.value.uri)
+        val currFile = File(vm.selectedPhoto.value.uriFile)
 
         binding.editTextRename.setText(currFile.nameWithoutExtension)
 

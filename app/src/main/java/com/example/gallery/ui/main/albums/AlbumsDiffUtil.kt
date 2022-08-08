@@ -21,7 +21,6 @@ class AlbumsDiffUtil(
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
         val oldAlbum = oldList[oldItemPosition]
         val newAlbum = newList[newItemPosition]
-        return oldAlbum.uri == newAlbum.uri &&
-                oldAlbum.photos == newAlbum.photos
+        return oldAlbum.photos == newAlbum.photos
     }
 }

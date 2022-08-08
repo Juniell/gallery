@@ -32,10 +32,21 @@ class ImagesFragment : Fragment() {
 
         with(binding.rvList) {
             layoutManager = GridLayoutManager(context, columnCount)
-            adapter = ImagesRecyclerAdapter(listOf()) { pos ->
-                vm.selectPhoto(vm.selectedAlbum.value.photos[pos])
-                findNavController().navigate(R.id.action_imagesFragment_to_fullscreenFragment)
-            }
+            adapter = ImagesRecyclerAdapter(
+                values = listOf(),
+                onItemClickListener = { pos ->
+                    vm.selectPhoto(vm.selectedAlbum.value.photos[pos])
+                    findNavController().navigate(R.id.action_imagesFragment_to_fullscreenFragment)
+                },
+                onItemLongClickListener = { pos ->
+                    vm.selectPhoto(vm.selectedAlbum.value.photos[pos])
+                    findNavController().navigate(R.id.action_imagesFragment_to_renameDialogFragment)
+                    true
+                },
+                loadThumbnail = { photo ->
+                    vm.loadThumbnail(photo)
+                }
+            )
         }
 
         viewLifecycleOwner.lifecycleScope.launch {

@@ -18,6 +18,9 @@
         <action
             android:id="@+id/action_imagesFragment_to_fullscreenFragment"
             app:destination="@id/fullscreenFragment" />
+        <action
+            android:id="@+id/action_imagesFragment_to_renameDialogFragment"
+            app:destination="@id/renameDialogFragment" />
     </fragment>
     <fragment
         android:id="@+id/fullscreenFragment"

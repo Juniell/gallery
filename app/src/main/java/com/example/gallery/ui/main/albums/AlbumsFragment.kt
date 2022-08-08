@@ -32,10 +32,16 @@ class AlbumsFragment : Fragment() {
 
         with(binding.rvList) {
             layoutManager = GridLayoutManager(context, columnCount)
-            adapter = AlbumsRecyclerAdapter(listOf()) { pos ->
-                vm.selectAlbum(vm.albums.value[pos])
-                findNavController().navigate(R.id.action_albumsFragment_to_imagesFragment)
-            }
+            adapter = AlbumsRecyclerAdapter(
+                values = listOf(),
+                onItemClickListener = { pos ->
+                    vm.selectAlbum(vm.albums.value[pos])
+                    findNavController().navigate(R.id.action_albumsFragment_to_imagesFragment)
+                },
+                loadThumbnail = { photo ->
+                    vm.loadThumbnail(photo)
+                }
+            )
         }
 
         viewLifecycleOwner.lifecycleScope.launch {

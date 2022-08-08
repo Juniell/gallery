@@ -7,11 +7,14 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.NavigationUI
 import com.example.gallery.R
 import com.example.gallery.databinding.ActivityMainBinding
 
@@ -31,10 +34,30 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
         navController = navHost.navController
 
+        // Настройка toolbar
+        val toolbar = binding.toolbar
+        val appBarConfiguration = AppBarConfiguration(navController.graph, null)
+        NavigationUI.setupWithNavController(toolbar, navController, appBarConfiguration)
+
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            when(destination.id) {
+                R.id.albumsFragment -> {
+                    toolbar.visibility = View.VISIBLE
+                    toolbar.title = "Галерея"
+                }
+                R.id.imagesFragment -> {
+                    toolbar.visibility = View.VISIBLE
+                    toolbar.title = vm.selectedAlbum.value.name
+                }
+                R.id.fullscreenFragment -> {
+                    toolbar.visibility = View.GONE
+                }
+            }
+        }
+
         setContentView(binding.root)
         check()
     }
-
 
     private fun check() {
         val rPermissionStatus = checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)

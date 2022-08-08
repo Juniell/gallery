@@ -1,11 +1,16 @@
 package com.example.gallery.ui.main
 
 import android.app.Application
+import android.content.ContentUris
 import android.database.ContentObserver
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.provider.MediaStore
+import android.util.Size
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gallery.model.Album
@@ -14,6 +19,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
 
 class GalleryViewModel(val app: Application) : AndroidViewModel(app) {
 
@@ -38,61 +45,35 @@ class GalleryViewModel(val app: Application) : AndroidViewModel(app) {
         _selectedPhoto.value = photo
     }
 
-    private fun getAllImagesWithAlbum(): List<Album> {
-        val albums = mutableMapOf<String, MutableList<Photo>>()
-
-        val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        val projection = arrayOf(
-            MediaStore.Images.Media._ID,
-            MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
-            MediaStore.Images.Media.DATA,
-            MediaStore.Images.Media.DISPLAY_NAME
-        )
-        val cursor = app.contentResolver.query(
-            uri,
-            projection,
-            null,
-            null,
-            null
-        )
-
-        if (cursor != null && cursor.count > 0)
-            if (cursor.moveToFirst()) {
-
-                val bucketNameColumn =
-                    cursor.getColumnIndex(MediaStore.Images.Media.BUCKET_DISPLAY_NAME)
-                val imageUriColumn =
-                    cursor.getColumnIndex(MediaStore.Images.Media.DATA)
-                val imageIdColumn =
-                    cursor.getColumnIndex(MediaStore.Images.Media._ID)
-                val imageNameColumn =
-                    cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)
-
-
-                do {
-                    // Получаем поля фото
-                    val bucketName = cursor.getString(bucketNameColumn)
-                    val imageUri = cursor.getString(imageUriColumn)
-                    val imageId = cursor.getString(imageIdColumn)
-                    val imageName = cursor.getString(imageNameColumn)
-
-                    val photo = Photo(imageId.toInt(), imageName, bucketName, imageUri)
-
-                    if (!albums.keys.contains(bucketName))
-                        albums[bucketName] = mutableListOf()
-
-                    albums[bucketName]!!.add(photo)
-                } while (cursor.moveToNext())
+    suspend fun loadBitmap(photo: Photo): Bitmap {
+        return withContext(Dispatchers.IO) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val source = ImageDecoder.createSource(app.contentResolver, photo.uriContent)
+                ImageDecoder.decodeBitmap(source)
+            } else {
+                MediaStore.Images.Media.getBitmap(app.contentResolver, photo.uriContent)
             }
-        cursor?.close()
-
-        // Формируем результирующий список Album
-        val resultList = albums.map { albumEl ->
-            val sortedPhotos = albumEl.value.sortedBy { it.name }
-            Album(albumEl.key, sortedPhotos.first().uri, sortedPhotos)
         }
+    }
 
-        return resultList.sortedBy { it.name }
+    suspend fun loadThumbnail(photo: Photo): Bitmap {
+        return withContext(Dispatchers.IO) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+
+                app.contentResolver.loadThumbnail(
+                    photo.uriContent,
+                    Size(480, 480),
+                    null
+                )
+            } else {
+                MediaStore.Images.Thumbnails.getThumbnail(
+                    app.contentResolver,
+                    photo.id.toLong(),
+                    MediaStore.Images.Thumbnails.MINI_KIND,
+                    null
+                )
+            }
+        }
     }
 
     fun registerObserver() {
@@ -174,8 +155,67 @@ class GalleryViewModel(val app: Application) : AndroidViewModel(app) {
 
                     super.onChange(selfChange, uris, flags)
                 }
-
             }
         )
+    }
+
+    private fun getAllImagesWithAlbum(): List<Album> {
+        val albums = mutableMapOf<String, MutableList<Photo>>()
+
+        val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        val projection = arrayOf(
+            MediaStore.Images.Media._ID,
+            MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
+            MediaStore.Images.Media.DATA,
+            MediaStore.Images.Media.DISPLAY_NAME
+        )
+        val cursor = app.contentResolver.query(
+            uri,
+            projection,
+            null,
+            null,
+            null
+        )
+
+        if (cursor != null && cursor.count > 0)
+            if (cursor.moveToFirst()) {
+                val bucketNameColumn =
+                    cursor.getColumnIndex(MediaStore.Images.Media.BUCKET_DISPLAY_NAME)
+                val imageUriColumn =
+                    cursor.getColumnIndex(MediaStore.Images.Media.DATA)
+                val imageIdColumn =
+                    cursor.getColumnIndex(MediaStore.Images.Media._ID)
+                val imageNameColumn =
+                    cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)
+
+                do {
+                    // Получаем поля фото
+                    val bucketName = cursor.getString(bucketNameColumn)
+                    val imageUriFile = cursor.getString(imageUriColumn)
+                    val imageId = cursor.getString(imageIdColumn)
+                    val imageName = cursor.getString(imageNameColumn)
+                    val imageUriContent = ContentUris.withAppendedId(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                        imageId.toLong()
+                    )
+
+                    val photo =
+                        Photo(imageId.toInt(), imageName, bucketName, imageUriContent, imageUriFile)
+
+                    if (!albums.keys.contains(bucketName))
+                        albums[bucketName] = mutableListOf()
+
+                    albums[bucketName]!!.add(photo)
+                } while (cursor.moveToNext())
+            }
+        cursor?.close()
+
+        // Формируем результирующий список Album
+        val resultList = albums.map { albumEl ->
+            val sortedPhotos = albumEl.value.sortedBy { it.name }
+            Album(albumEl.key, sortedPhotos)
+        }
+
+        return resultList.sortedBy { it.name }
     }
 }
